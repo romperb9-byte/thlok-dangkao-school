@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSchool } from '../../context/SchoolContext';
 import { School, ShieldAlert, Award, UserCheck, GraduationCap, Lock, User, ArrowRight, Sparkles, KeyRound } from 'lucide-react';
 import { UserRole } from '../../types';
+import { appMode, supabase } from '../../lib/supabase';
 
 export const LoginView: React.FC = () => {
   const { cluster, schools, login, switchAccount, accounts, setShowAccountsModal } = useSchool();
@@ -9,20 +10,62 @@ export const LoginView: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'quick' | 'manual'>('quick');
+  const [activeTab, setActiveTab] = useState<'quick' | 'manual'>(appMode === 'demo' ? 'quick' : 'manual');
+  const [isLoading, setIsLoading] = useState(false);
+  const [recoveryMode, setRecoveryMode] = useState(window.location.hash.includes('type=recovery'));
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordUpdated, setPasswordUpdated] = useState(false);
+  const isDemo = appMode === 'demo';
 
-  const handleManualLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!supabase) return;
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true);
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     if (!username.trim()) {
-      setErrorMsg('សូមបញ្ចូលឈ្មោះគណនី ឬអត្តលេខ!');
+      setErrorMsg('?????????????????? ????????!');
       return;
     }
 
-    const success = login(username, password);
+    setIsLoading(true);
+    const success = await login(username, password);
+    setIsLoading(false);
     if (!success) {
-      setErrorMsg('ឈ្មោះគណនី ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ!');
+      setErrorMsg('????????? ?????????????????????????????!');
     }
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    if (newPassword.length < 8) {
+      setErrorMsg('??????????????????????????? ? ????????');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMsg('??????????????????????????????');
+      return;
+    }
+    if (!supabase) {
+      setErrorMsg('????????????????????????????????');
+      return;
+    }
+    setIsLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setIsLoading(false);
+    if (error) {
+      setErrorMsg('????????????? ????????????????????????????');
+      return;
+    }
+    setPasswordUpdated(true);
+    window.history.replaceState({}, document.title, window.location.pathname);
   };
 
   const handleQuickLogin = (role: UserRole) => {
@@ -50,15 +93,15 @@ export const LoginView: React.FC = () => {
             {cluster.nameKh}
           </p>
           <h2 className="text-xl sm:text-2xl font-bold font-moul tracking-wide mt-1 text-white">
-            ចូលប្រើប្រាស់ប្រព័ន្ធ
+            ?????????????????????
           </h2>
           <p className="text-xs text-blue-200 mt-1">
-            ប្រព័ន្ធគ្រប់គ្រង ៧ សាលារៀន ៧០ ថ្នាក់ និង ៣,៥០០ សិស្ស
+            ????????????????? ? ??????? ?? ?????? ??? ?,??? ?????
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex border-b border-slate-100 bg-slate-50 text-xs font-bold">
+        {!recoveryMode && isDemo && <div className="flex border-b border-slate-100 bg-slate-50 text-xs font-bold">
           <button
             onClick={() => setActiveTab('quick')}
             className={`flex-1 py-3 text-center transition-all ${
@@ -67,7 +110,7 @@ export const LoginView: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            ⚡ ចូលរហ័សតាមតួនាទី
+            ? ????????????????
           </button>
           <button
             onClick={() => setActiveTab('manual')}
@@ -77,16 +120,38 @@ export const LoginView: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            🔑 វាយឈ្មោះគណនី / អត្តលេខ
+            ?? ???????????? / ???????
           </button>
-        </div>
+        </div>}
 
         <div className="p-6">
           {/* Quick 1-Click Role Login */}
-          {activeTab === 'quick' && (
+          {recoveryMode && (
+            <form onSubmit={handlePasswordUpdate} className="space-y-4">
+              <div className="text-center">
+                <KeyRound className="w-10 h-10 text-blue-600 mx-auto mb-2" />
+                <h3 className="font-bold text-slate-900">?????????????????????</h3>
+                <p className="text-xs text-slate-500 mt-1">?????????????? ? ??????? ???????????????????????????</p>
+              </div>
+              {errorMsg && <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">?? {errorMsg}</div>}
+              {passwordUpdated ? (
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold text-center">
+                  ? ????????????????????????????? ????????????????????????????????
+                </div>
+              ) : <>
+                <input type="password" required minLength={8} placeholder="????????????????" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                <input type="password" required minLength={8} placeholder="???????????????????????" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                <button type="submit" disabled={isLoading} className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold text-sm rounded-xl">
+                  {isLoading ? '?????????????.' : '????????????????????'}
+                </button>
+              </>}
+            </form>
+          )}
+
+          {!recoveryMode && isDemo && activeTab === 'quick' && (
             <div className="space-y-3">
               <p className="text-xs text-slate-500 text-center mb-4">
-                ជ្រើសរើសតួនាទីដើម្បីចូលប្រើប្រាស់ភ្លាមៗ (Demo Instant Access)៖
+                ??????????????????????????????????????? (Demo Instant Access)?
               </p>
 
               {/* Cluster Head */}
@@ -99,8 +164,8 @@ export const LoginView: React.FC = () => {
                     <ShieldAlert className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm">ប្រធានកម្រង (Cluster Head)</div>
-                    <div className="text-[11px] opacity-80">គ្រប់គ្រង ៧ សាលារៀន • លោក ឈន សុខុម</div>
+                    <div className="font-bold text-sm">??????????? (Cluster Head)</div>
+                    <div className="text-[11px] opacity-80">????????? ? ???????  ??? ?? ?????</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -116,8 +181,8 @@ export const LoginView: React.FC = () => {
                     <Award className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm">នាយកសាលា (Principal)</div>
-                    <div className="text-[11px] opacity-80">គ្រប់គ្រង ១០ ថ្នាក់ & ១០ គ្រូ • សាលាថ្លុកដង្កោ</div>
+                    <div className="font-bold text-sm">???????? (Principal)</div>
+                    <div className="text-[11px] opacity-80">????????? ?? ?????? & ?? ????  ??????????????</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -133,8 +198,8 @@ export const LoginView: React.FC = () => {
                     <UserCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm">គ្រូបង្រៀន (Teacher)</div>
-                    <div className="text-[11px] opacity-80">គ្រប់គ្រង ៥០ សិស្ស • បញ្ចូលពិន្ទុ ១៥ មុខវិជ្ជា</div>
+                    <div className="font-bold text-sm">?????????? (Teacher)</div>
+                    <div className="text-[11px] opacity-80">????????? ?? ?????  ???????????? ?? ?????????</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -150,8 +215,8 @@ export const LoginView: React.FC = () => {
                     <GraduationCap className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm">សិស្ស / អាណាព្យាបាល (Student Portal)</div>
-                    <div className="text-[11px] opacity-80">មើលពិន្ទុ ១៥ មុខវិជ្ជា ចំណាត់ថ្នាក់ & ប័ណ្ណសរសើរ</div>
+                    <div className="font-bold text-sm">????? / ??????????? (Student Portal)</div>
+                    <div className="text-[11px] opacity-80">????????? ?? ????????? ???????????? & ??????????</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -160,43 +225,43 @@ export const LoginView: React.FC = () => {
           )}
 
           {/* Manual Username / ID Login */}
-          {activeTab === 'manual' && (
+          {!recoveryMode && activeTab === 'manual' && (
             <form onSubmit={handleManualLogin} className="space-y-4">
               {errorMsg && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold animate-in fade-in">
-                  ⚠️ {errorMsg}
+                  ?? {errorMsg}
                 </div>
               )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  ឈ្មោះគណនី ឬ អត្តលេខសិស្ស / គ្រូ
+                  {isDemo ? '????????? ? ???????????? / ????' : '?????? (Email)'}
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
-                    placeholder="ឧ. clusterhead, principal1, ST-01-0001..."
+                    placeholder={isDemo ? '?. clusterhead, principal1, ST-01-0001...' : 'name@example.com'}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
-                <span className="text-[10px] text-slate-400 mt-1 block">
-                  💡 សិស្សអាចវាយអត្តលេខដូចជា <strong className="text-slate-600">ST-01-0001</strong>
-                </span>
+                {isDemo && <span className="text-[10px] text-slate-400 mt-1 block">
+                  ?? ??????????????????????? <strong className="text-slate-600">ST-01-0001</strong>
+                </span>}
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  ពាក្យសម្ងាត់ (Password)
+                  ???????????? (Password)
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="password"
-                    placeholder="វាយលេខកូដសម្ងាត់ (ឧ. 123)"
+                    placeholder={isDemo ? '???????????????? (?. 123)' : '???????????????'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -209,23 +274,24 @@ export const LoginView: React.FC = () => {
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
                 <KeyRound className="w-4 h-4" />
-                <span>ចូលប្រព័ន្ធ (Login)</span>
+                <span>{isLoading ? '????????.' : '??????????? (Login)'}</span>
               </button>
             </form>
           )}
 
           {/* Accounts Directory Button */}
-          <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+          {!recoveryMode && isDemo && <div className="mt-6 pt-4 border-t border-slate-100 text-center">
             <button
               onClick={() => setShowAccountsModal(true)}
               className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center gap-1.5 mx-auto"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>មើលតារាងគណនី និងលេខកូដទាំងអស់ (Accounts Directory)</span>
+              <span>???????????? ???????????????? (Accounts Directory)</span>
             </button>
-          </div>
+          </div>}
         </div>
       </div>
     </div>
   );
 };
+
