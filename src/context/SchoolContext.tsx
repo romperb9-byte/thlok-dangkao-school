@@ -8,6 +8,7 @@ import {
   INITIAL_SUBJECTS, INITIAL_STUDENTS, generateInitialAttendance, 
   generateInitialGrades, INITIAL_RECEIPTS, SAMPLE_TIMETABLES, INITIAL_ACCOUNTS 
 } from '../data/initialData';
+import { appMode, supabase } from '../lib/supabase';
 
 interface SchoolContextType {
   cluster: SchoolCluster;
@@ -33,7 +34,7 @@ interface SchoolContextType {
   showAccountsModal: boolean;
   
   // Auth Actions
-  login: (username: string, password?: string) => boolean;
+  login: (username: string, password?: string) => Promise<boolean>;
   logout: () => void;
   switchAccount: (account: UserAccount) => void;
   setShowAccountsModal: (show: boolean) => void;
@@ -149,10 +150,11 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return saved ? JSON.parse(saved) : SAMPLE_TIMETABLES;
   });
 
-  const [accounts] = useState<UserAccount[]>(INITIAL_ACCOUNTS);
+  const [accounts] = useState<UserAccount[]>(appMode === 'demo' ? INITIAL_ACCOUNTS : []);
 
   // Authentication state
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    if (appMode === 'production') return null;
     const saved = localStorage.getItem(STORAGE_KEY_AUTH);
     return saved ? JSON.parse(saved) : INITIAL_ACCOUNTS[0]; // Default logged in as cluster head
   });
@@ -209,8 +211,64 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const currentUserRole: UserRole = currentUser?.role || 'cluster_head';
   const isLoggedIn = !!currentUser;
 
+  const loadProductionUser = async (authUserId: string) => {
+    if (!supabase) return false;
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('id, school_id, role, display_name, phone, active')
+      .eq('id', authUserId)
+      .single();
+
+    if (error || !profile || !profile.active) {
+      setCurrentUser(null);
+      return false;
+    }
+
+    const school = schools.find(item => item.id === profile.school_id);
+    setCurrentUser({
+      id: profile.id,
+      username: profile.id,
+      role: profile.role as UserRole,
+      displayName: profile.display_name,
+      titleKh: profile.role === 'cluster_head' ? '???????????' : '??????????????',
+      schoolId: profile.school_id || undefined,
+      schoolName: school?.nameKh,
+      phone: profile.phone || undefined,
+    });
+    if (profile.school_id) setActiveSchoolIdState(profile.school_id);
+    return true;
+  };
+
+  useEffect(() => {
+    if (appMode !== 'production' || !supabase) return;
+
+    void supabase.auth.getUser().then(({ data }) => {
+      if (data.user) void loadProductionUser(data.user.id);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        void loadProductionUser(session.user.id);
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, [schools]);
+
   // Auth Methods
-  const login = (username: string, password?: string): boolean => {
+  const login = async (username: string, password?: string): Promise<boolean> => {
+    if (appMode === 'production') {
+      if (!supabase || !password) return false;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username.trim(),
+        password,
+      });
+      if (error || !data.user) return false;
+      return loadProductionUser(data.user.id);
+    }
+
     const cleanUser = username.trim().toLowerCase().replace(/-/g, '_');
     const matched = accounts.find(
       a => a.username.toLowerCase() === cleanUser || a.username.toLowerCase().replace(/_/g, '-') === cleanUser
@@ -232,14 +290,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         username: matchedStudent.code,
         role: 'student',
         displayName: matchedStudent.nameKh,
-        titleKh: `សិស្ស ថ្នាក់ទី ${matchedStudent.grade}${matchedStudent.section}`,
+        titleKh: `????? ???????? ${matchedStudent.grade}${matchedStudent.section}`,
         schoolId: matchedStudent.schoolId,
         schoolName: sSchool?.nameKh,
         classId: matchedStudent.classId,
-        className: `ថ្នាក់ទី ${matchedStudent.grade}${matchedStudent.section}`,
+        className: `???????? ${matchedStudent.grade}${matchedStudent.section}`,
         referenceId: matchedStudent.id,
         phone: matchedStudent.phone,
-        avatarIcon: matchedStudent.gender === 'female' ? '👧' : '👦',
+        avatarIcon: matchedStudent.gender === 'female' ? '??' : '??',
       };
       setCurrentUser(studentAcc);
       setActiveSchoolId(matchedStudent.schoolId);
@@ -250,11 +308,13 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const logout = () => {
+    if (appMode === 'production' && supabase) void supabase.auth.signOut();
     setCurrentUser(null);
     localStorage.removeItem(STORAGE_KEY_AUTH);
   };
 
   const switchAccount = (account: UserAccount) => {
+    if (appMode === 'production') return;
     setCurrentUser(account);
     if (account.schoolId) setActiveSchoolId(account.schoolId);
     if (account.referenceId) setCurrentTeacherId(account.referenceId);
@@ -262,6 +322,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const setUserRole = (role: UserRole) => {
+    if (appMode === 'production') return;
     if (role === 'cluster_head') {
       switchAccount(accounts[0]);
     } else if (role === 'principal') {
@@ -444,6 +505,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const resetAllData = () => {
+    if (appMode === 'production') return;
     localStorage.clear();
     setSchools(INITIAL_SCHOOLS);
     setStudents(INITIAL_STUDENTS);
@@ -514,3 +576,4 @@ export const useSchool = () => {
   }
   return context;
 };
+
