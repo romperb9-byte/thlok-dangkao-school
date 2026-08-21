@@ -30,7 +30,7 @@ export const LoginView: React.FC = () => {
     e.preventDefault();
     setErrorMsg('');
     if (!username.trim()) {
-      setErrorMsg('?????????????????? ????????!');
+      setErrorMsg('សូមបញ្ចូលឈ្មោះគណនី ឬអត្តលេខ!');
       return;
     }
 
@@ -38,7 +38,7 @@ export const LoginView: React.FC = () => {
     const success = await login(username, password);
     setIsLoading(false);
     if (!success) {
-      setErrorMsg('????????? ?????????????????????????????!');
+      setErrorMsg('ឈ្មោះគណនី ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវឡើយ!');
     }
   };
 
@@ -46,22 +46,22 @@ export const LoginView: React.FC = () => {
     e.preventDefault();
     setErrorMsg('');
     if (newPassword.length < 8) {
-      setErrorMsg('??????????????????????????? ? ????????');
+      setErrorMsg('ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៨ តួអក្សរ។');
       return;
     }
     if (newPassword !== confirmPassword) {
-      setErrorMsg('??????????????????????????????');
+      setErrorMsg('ពាក្យសម្ងាត់ទាំងពីរមិនដូចគ្នា។');
       return;
     }
     if (!supabase) {
-      setErrorMsg('????????????????????????????????');
+      setErrorMsg('មិនទាន់ភ្ជាប់ប្រព័ន្ធសុវត្ថិភាព។');
       return;
     }
     setIsLoading(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setIsLoading(false);
     if (error) {
-      setErrorMsg('????????????? ????????????????????????????');
+      setErrorMsg('តំណអស់សុពលភាព ឬមិនអាចកំណត់ពាក្យសម្ងាត់បាន។');
       return;
     }
     setPasswordUpdated(true);
@@ -93,10 +93,10 @@ export const LoginView: React.FC = () => {
             {cluster.nameKh}
           </p>
           <h2 className="text-xl sm:text-2xl font-bold font-moul tracking-wide mt-1 text-white">
-            ?????????????????????
+            ចូលប្រើប្រាស់ប្រព័ន្ធ
           </h2>
           <p className="text-xs text-blue-200 mt-1">
-            ????????????????? ? ??????? ?? ?????? ??? ?,??? ?????
+            ប្រព័ន្ធគ្រប់គ្រង ៧ សាលារៀន ៧០ ថ្នាក់ និង ៣,៥០០ សិស្ស
           </p>
         </div>
 
@@ -110,7 +110,7 @@ export const LoginView: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            ? ????????????????
+            ⚡ ចូលរហ័សតាមតួនាទី
           </button>
           <button
             onClick={() => setActiveTab('manual')}
@@ -120,7 +120,7 @@ export const LoginView: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            ?? ???????????? / ???????
+            🔑 វាយឈ្មោះគណនី / អត្តលេខ
           </button>
         </div>}
 
@@ -130,19 +130,19 @@ export const LoginView: React.FC = () => {
             <form onSubmit={handlePasswordUpdate} className="space-y-4">
               <div className="text-center">
                 <KeyRound className="w-10 h-10 text-blue-600 mx-auto mb-2" />
-                <h3 className="font-bold text-slate-900">?????????????????????</h3>
-                <p className="text-xs text-slate-500 mt-1">?????????????? ? ??????? ???????????????????????????</p>
+                <h3 className="font-bold text-slate-900">កំណត់ពាក្យសម្ងាត់ថ្មី</h3>
+                <p className="text-xs text-slate-500 mt-1">សូមប្រើយ៉ាងតិច ៨ តួអក្សរ និងកុំចែករំលែកជាមួយអ្នកដទៃ។</p>
               </div>
-              {errorMsg && <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">?? {errorMsg}</div>}
+              {errorMsg && <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold">⚠️ {errorMsg}</div>}
               {passwordUpdated ? (
                 <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold text-center">
-                  ? ????????????????????????????? ????????????????????????????????
+                  ✅ ពាក្យសម្ងាត់ត្រូវបានកំណត់រួច។ អ្នកអាចចូលប្រើប្រាស់ប្រព័ន្ធបាន។
                 </div>
               ) : <>
-                <input type="password" required minLength={8} placeholder="????????????????" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-                <input type="password" required minLength={8} placeholder="???????????????????????" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                <input type="password" required minLength={8} placeholder="ពាក្យសម្ងាត់ថ្មី" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                <input type="password" required minLength={8} placeholder="បញ្ជាក់ពាក្យសម្ងាត់ថ្មី" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
                 <button type="submit" disabled={isLoading} className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold text-sm rounded-xl">
-                  {isLoading ? '?????????????.' : '????????????????????'}
+                  {isLoading ? 'កំពុងរក្សាទុក…' : 'រក្សាទុកពាក្យសម្ងាត់'}
                 </button>
               </>}
             </form>
@@ -151,7 +151,7 @@ export const LoginView: React.FC = () => {
           {!recoveryMode && isDemo && activeTab === 'quick' && (
             <div className="space-y-3">
               <p className="text-xs text-slate-500 text-center mb-4">
-                ??????????????????????????????????????? (Demo Instant Access)?
+                ជ្រើសរើសតួនាទីដើម្បីចូលប្រើប្រាស់ភ្លាមៗ (Demo Instant Access)៖
               </p>
 
               {/* Cluster Head */}
@@ -164,8 +164,8 @@ export const LoginView: React.FC = () => {
                     <ShieldAlert className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm">??????????? (Cluster Head)</div>
-                    <div className="text-[11px] opacity-80">????????? ? ???????  ??? ?? ?????</div>
+                    <div className="font-bold text-sm">ប្រធានកម្រង (Cluster Head)</div>
+                    <div className="text-[11px] opacity-80">គ្រប់គ្រង ៧ សាលារៀន • លោក ឈន សុខុម</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -181,8 +181,8 @@ export const LoginView: React.FC = () => {
                     <Award className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm">???????? (Principal)</div>
-                    <div className="text-[11px] opacity-80">????????? ?? ?????? & ?? ????  ??????????????</div>
+                    <div className="font-bold text-sm">នាយកសាលា (Principal)</div>
+                    <div className="text-[11px] opacity-80">គ្រប់គ្រង ១០ ថ្នាក់ & ១០ គ្រូ • សាលាថ្លុកដង្កោ</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -198,8 +198,8 @@ export const LoginView: React.FC = () => {
                     <UserCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm">?????????? (Teacher)</div>
-                    <div className="text-[11px] opacity-80">????????? ?? ?????  ???????????? ?? ?????????</div>
+                    <div className="font-bold text-sm">គ្រូបង្រៀន (Teacher)</div>
+                    <div className="text-[11px] opacity-80">គ្រប់គ្រង ៥០ សិស្ស • បញ្ចូលពិន្ទុ ១៥ មុខវិជ្ជា</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -215,8 +215,8 @@ export const LoginView: React.FC = () => {
                     <GraduationCap className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-bold text-sm">????? / ??????????? (Student Portal)</div>
-                    <div className="text-[11px] opacity-80">????????? ?? ????????? ???????????? & ??????????</div>
+                    <div className="font-bold text-sm">សិស្ស / អាណាព្យាបាល (Student Portal)</div>
+                    <div className="text-[11px] opacity-80">មើលពិន្ទុ ១៥ មុខវិជ្ជា ចំណាត់ថ្នាក់ & ប័ណ្ណសរសើរ</div>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -229,39 +229,39 @@ export const LoginView: React.FC = () => {
             <form onSubmit={handleManualLogin} className="space-y-4">
               {errorMsg && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold animate-in fade-in">
-                  ?? {errorMsg}
+                  ⚠️ {errorMsg}
                 </div>
               )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {isDemo ? '????????? ? ???????????? / ????' : '?????? (Email)'}
+                  {isDemo ? 'ឈ្មោះគណនី ឬ អត្តលេខសិស្ស / គ្រូ' : 'អ៊ីមែល (Email)'}
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
-                    placeholder={isDemo ? '?. clusterhead, principal1, ST-01-0001...' : 'name@example.com'}
+                    placeholder={isDemo ? 'ឧ. clusterhead, principal1, ST-01-0001...' : 'name@example.com'}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 {isDemo && <span className="text-[10px] text-slate-400 mt-1 block">
-                  ?? ??????????????????????? <strong className="text-slate-600">ST-01-0001</strong>
+                  💡 សិស្សអាចវាយអត្តលេខដូចជា <strong className="text-slate-600">ST-01-0001</strong>
                 </span>}
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  ???????????? (Password)
+                  ពាក្យសម្ងាត់ (Password)
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="password"
-                    placeholder={isDemo ? '???????????????? (?. 123)' : '???????????????'}
+                    placeholder={isDemo ? 'វាយលេខកូដសម្ងាត់ (ឧ. 123)' : 'វាយពាក្យសម្ងាត់'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -274,7 +274,7 @@ export const LoginView: React.FC = () => {
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
               >
                 <KeyRound className="w-4 h-4" />
-                <span>{isLoading ? '????????.' : '??????????? (Login)'}</span>
+                <span>{isLoading ? 'កំពុងចូល…' : 'ចូលប្រព័ន្ធ (Login)'}</span>
               </button>
             </form>
           )}
@@ -286,7 +286,7 @@ export const LoginView: React.FC = () => {
               className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center justify-center gap-1.5 mx-auto"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>???????????? ???????????????? (Accounts Directory)</span>
+              <span>មើលតារាងគណនី និងលេខកូដទាំងអស់ (Accounts Directory)</span>
             </button>
           </div>}
         </div>
@@ -294,4 +294,3 @@ export const LoginView: React.FC = () => {
     </div>
   );
 };
-
