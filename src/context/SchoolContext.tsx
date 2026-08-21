@@ -230,7 +230,7 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       username: profile.id,
       role: profile.role as UserRole,
       displayName: profile.display_name,
-      titleKh: profile.role === 'cluster_head' ? '???????????' : '??????????????',
+      titleKh: profile.role === 'cluster_head' ? 'ប្រធានកម្រង' : 'អ្នកប្រើប្រាស់',
       schoolId: profile.school_id || undefined,
       schoolName: school?.nameKh,
       phone: profile.phone || undefined,
@@ -290,14 +290,14 @@ export const SchoolProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         username: matchedStudent.code,
         role: 'student',
         displayName: matchedStudent.nameKh,
-        titleKh: `????? ???????? ${matchedStudent.grade}${matchedStudent.section}`,
+        titleKh: `សិស្ស ថ្នាក់ទី ${matchedStudent.grade}${matchedStudent.section}`,
         schoolId: matchedStudent.schoolId,
         schoolName: sSchool?.nameKh,
         classId: matchedStudent.classId,
-        className: `???????? ${matchedStudent.grade}${matchedStudent.section}`,
+        className: `ថ្នាក់ទី ${matchedStudent.grade}${matchedStudent.section}`,
         referenceId: matchedStudent.id,
         phone: matchedStudent.phone,
-        avatarIcon: matchedStudent.gender === 'female' ? '??' : '??',
+        avatarIcon: matchedStudent.gender === 'female' ? '👧' : '👦',
       };
       setCurrentUser(studentAcc);
       setActiveSchoolId(matchedStudent.schoolId);
@@ -576,4 +576,3 @@ export const useSchool = () => {
   }
   return context;
 };
-
